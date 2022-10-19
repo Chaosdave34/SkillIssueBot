@@ -47,7 +47,7 @@ class DatabaseHandler:
 
     # Users Table
     def check_user(self, member_id):
-        sql = f"SELECT id FROM users WHERE id = '{member_id}';"
+        sql = f"SELECT * FROM users WHERE id = '{member_id}';"
         self.cursor.execute(sql)
         return self.cursor.fetchone()
 
@@ -56,3 +56,16 @@ class DatabaseHandler:
         self.cursor.execute(sql)
         self.connection.commit()
 
+    def remove_user(self, member_id):
+        sql = f"DELETE FROM users WHERE id = {member_id};"
+        self.cursor.execute(sql)
+        self.connection.commit()
+
+    def get_all_uuids(self):
+        sql = "SELECT uuid from users;"
+        self.cursor.execute(sql)
+        return self.cursor.fetchall()
+
+
+if __name__ == "__main__":
+    database_handler = DatabaseHandler()

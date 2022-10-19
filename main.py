@@ -230,6 +230,32 @@ class Check(app_commands.Group):
 
         await interaction.response.send_message(embed=discord.Embed(title=response))
 
+    @app_commands.command(description="Check if an user passes the requirements.")
+    async def reqs(self, interaction: discord.Interaction, user: discord.User):
+        info = database_handler.check_user(user.id)
+
+        if info is None:
+            response = "This user is not verified yet!"
+
+        else:
+            print(info)
+            uuid = info[1]
+            profiles = minecraft.get_skyblock_profile(uuid)
+            profiles = profiles["profiles"]
+
+            average_levels = {}
+            for profile in profiles:
+                average_levels[profiles[profile]["data"]["average_level"]] = profiles[profile]["profile_id"]
+
+            profile = profiles[average_levels[max(average_levels)]]
+            secrets = profile["data"]["dungeons"]["secrets_found"]
+            cata = profile["data"]["dungeons"]["catacombs"]["level"]["level"]
+            comps = profile["data"]["dungeons"]["catacombs"]["floors"]["7"]["stats"]["tier_completions"]
+
+            response = secrets, cata, comps
+
+        await interaction.response.send_message(content=response)
+
 
 client.tree.add_command(Check())
 client.tree.add_command(Manage())
