@@ -1,2 +1,0 @@
-# SkillIssueBot
-SkillIssue Discord Bot 

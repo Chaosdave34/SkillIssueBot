@@ -46,9 +46,3 @@ def get_skyblock_profile(playername):
     response = requests.get(f"https://sky.shiiyu.moe/api/v2/profile/{playername}")
     response = read_json(response)
     return response
-
-
-hypixel = HyixelHandler("4285cedc-b7cd-44ca-85bb-3534de1d30e5")
-uuid = username_to_uuid("Chaosdave34")
-#print(hypixel.get_profiles(uuid))
-print(get_skyblock_profile(uuid))
