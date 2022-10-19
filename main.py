@@ -238,7 +238,6 @@ class Check(app_commands.Group):
             response = "This user is not verified yet!"
 
         else:
-            print(info)
             uuid = info[1]
             profiles = minecraft.get_skyblock_profile(uuid)
             profiles = profiles["profiles"]
@@ -252,7 +251,7 @@ class Check(app_commands.Group):
             cata = profile["data"]["dungeons"]["catacombs"]["level"]["level"]
             comps = profile["data"]["dungeons"]["catacombs"]["floors"]["7"]["stats"]["tier_completions"]
 
-            response = secrets, cata, comps
+            response = f"Secrets: {secrets}/5000\nCatacombs Level: {cata}/30\nF7 Completions: {comps}/40"
 
         await interaction.response.send_message(content=response)
 
