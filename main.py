@@ -111,6 +111,8 @@ async def verify(interaction: discord.Interaction, ign: str):
                             response = "The given IGN is not linked to your discord account!"
 
     await interaction.response.send_message(embed=discord.Embed(title=response), ephemeral=True)
+    embed = filter_profile_informartion(member=user)
+    await interaction.guild.get_channel(1022135331094528070).send(embed=embed, content="Someone verified:")
 
 
 @app_commands.guilds(GUILD.id)
@@ -158,6 +160,8 @@ class Manage(app_commands.Group):
                                 response = "The given IGN is not linked to the user's discord account!"
 
         await interaction.response.send_message(embed=discord.Embed(title=response))
+        embed = filter_profile_informartion(member=user)
+        await interaction.guild.get_channel(1022135331094528070).send(embed=embed, content="Someone verified:")
 
     @app_commands.command(description="Unverify an user!")
     async def unverify(self, interaction: discord.Interaction, user: discord.User):
@@ -233,77 +237,81 @@ class Check(app_commands.Group):
     @app_commands.command(description="Check if an user passes the requirements.")
     async def reqs(self, interaction: discord.Interaction, user: discord.User):
         user = interaction.guild.get_member(user.id)
-        info = database_handler.check_user(user.id)
 
-        if info is None:
-            embed = discord.Embed(title="This user is not verified yet!")
+        await interaction.response.defer()
+        embed = filter_profile_informartion(user)
 
-        else:
-            uuid = info[1]
-            profiles = minecraft.get_skyblock_profile(uuid)
-            profiles = profiles["profiles"]
-            average_levels = {}
-            for profile in profiles:
-                average_levels[profiles[profile]["data"]["average_level"]] = profiles[profile]["profile_id"]
-
-            profile = profiles[average_levels[max(average_levels)]]
-
-            secrets, cata, comps, weapon_list = filter_profile_informartion(profile)
-
-            response = f"Secrets: {secrets}/5000\nCatacombs Level: {cata}/30\nF7 Completions: {comps}/40"
-
-            if user.nick:
-                title = f"{user.nick}'s ({user.name}) requirements:"
-            else:
-                title = f"{user.name}'s requirements:"
-
-            colour = discord.Colour.red()
-
-            test = any(items in ["Wither Blade", "Terminator"] for items in weapon_list) or all(
-                items in ["Axe of the Shredded", "Giant's Sword"] for items in weapon_list) or "Juju Shortbow - SE 5 and OV 5" in weapon_list
-
-            if secrets >= 5000 and cata >= 30 and comps >= 40 and test:
-                colour = discord.Colour.green()
-
-            embed = discord.Embed(title=title, colour=colour)
-            embed.add_field(name="General:", value=response)
-            value = "\n".join(weapon_list)
-
-            embed.add_field(name="Weapons:", value=value if value != "" else "---")
-        await interaction.response.send_message(embed=embed)
+        await interaction.followup.send(embed=embed)
 
 
-def filter_profile_informartion(profile):
-    secrets = profile["data"]["dungeons"]["secrets_found"]
-    cata = profile["data"]["dungeons"]["catacombs"]["level"]["level"]
-    if "7" in profile["data"]["dungeons"]["catacombs"]["floors"]:
-        comps = profile["data"]["dungeons"]["catacombs"]["floors"]["7"]["stats"]["tier_completions"]
+def filter_profile_informartion(member: discord.Member):
+    info = database_handler.check_user(member.id)
+
+    if info is None:
+        embed = discord.Embed(title="This user is not verified yet!")
+
     else:
-        comps = 0
+        uuid = info[1]
+        profiles = minecraft.get_skyblock_profile(uuid)
+        profiles = profiles["profiles"]
+        average_levels = {}
+        for profile in profiles:
+            average_levels[profiles[profile]["data"]["average_level"]] = profiles[profile]["profile_id"]
 
-    weapons = profile["items"]["weapons"]
-    weapon_list = []
-    for weapon in weapons:
-        weapon_info = weapon["tag"]["ExtraAttributes"]
-        weapon_id = weapon_info["id"]
+        profile = profiles[average_levels[max(average_levels)]]
 
-        if weapon_id == "TERMINATOR":
-            weapon_list.append("Terminator")
+        secrets = profile["data"]["dungeons"]["secrets_found"]
+        cata = profile["data"]["dungeons"]["catacombs"]["level"]["level"]
+        if "7" in profile["data"]["dungeons"]["catacombs"]["floors"]:
+            comps = profile["data"]["dungeons"]["catacombs"]["floors"]["7"]["stats"]["tier_completions"]
+        else:
+            comps = 0
 
-        if weapon_id == "JUJU_SHORTBOW":
-            overload = weapon_info["enchantments"]["overload"] if "overload" in weapon_info["enchantments"] else 0
-            soul_eater = weapon_info["enchantments"]["ultimate_soul_eater"] if "ultimate_soul_eater" in weapon_info["enchantments"] else 0
-            weapon_list.append(f"Juju Shortbow - SE {soul_eater} and OV {overload}")
+        weapons = profile["items"]["weapons"]
+        weapon_list = []
+        for weapon in weapons:
+            weapon_info = weapon["tag"]["ExtraAttributes"]
+            weapon_id = weapon_info["id"]
 
-        if weapon_id == "AXE_OF_THE_SHREDDED ":
-            weapon_list.append("Axe of the Shredded")
+            if weapon_id == "TERMINATOR":
+                weapon_list.append("Terminator")
 
-        if weapon_id == "GIANTS_SWORD":
-            weapon_list.append("Giant's Sword")
+            if weapon_id == "JUJU_SHORTBOW":
+                overload = weapon_info["enchantments"]["overload"] if "overload" in weapon_info["enchantments"] else 0
+                soul_eater = weapon_info["enchantments"]["ultimate_soul_eater"] if "ultimate_soul_eater" in weapon_info["enchantments"] else 0
+                weapon_list.append(f"Juju Shortbow - SE {soul_eater} and OV {overload}")
 
-        if weapon_id in ["HYPERION", "VALKYRIE", "ASTRAEA", "SCYLLA"]:
-            weapon_list.append("Wither Blade")
-    return secrets, cata, comps, weapon_list
+            if weapon_id == "AXE_OF_THE_SHREDDED ":
+                weapon_list.append("Axe of the Shredded")
+
+            if weapon_id == "GIANTS_SWORD":
+                weapon_list.append("Giant's Sword")
+
+            if weapon_id in ["HYPERION", "VALKYRIE", "ASTRAEA", "SCYLLA"]:
+                weapon_list.append("Wither Blade")
+
+        response = f"Secrets: {secrets}/5000\nCatacombs Level: {cata}/30\nF7 Completions: {comps}/40"
+
+        if member.nick:
+            title = f"{member.nick}'s ({member.name}) requirements:"
+        else:
+            title = f"{member.name}'s requirements:"
+
+        colour = discord.Colour.red()
+
+        test = any(items in ["Wither Blade", "Terminator"] for items in weapon_list) or all(
+            items in ["Axe of the Shredded", "Giant's Sword"] for items in weapon_list) or "Juju Shortbow - SE 5 and OV 5" in weapon_list
+
+        if secrets >= 5000 and cata >= 30 and comps >= 40 and test:
+            colour = discord.Colour.green()
+
+        embed = discord.Embed(title=title, colour=colour)
+        embed.add_field(name="General:", value=response)
+        value = "\n".join(weapon_list)
+
+        embed.add_field(name="Weapons:", value=value if value != "" else "---")
+
+    return embed
 
 
 client.tree.add_command(Check())
