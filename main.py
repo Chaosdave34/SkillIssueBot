@@ -61,6 +61,12 @@ class MyClient(discord.Client):
             if info is not None:
                 database_handler.remove_user(after.id)
 
+    async def on_member_remove(self, member: discord.Member):
+        info = database_handler.check_user(member.id)
+
+        if info is not None:
+            database_handler.remove_user(member.id)
+
 
 intents = discord.Intents.default()
 intents.message_content = True
