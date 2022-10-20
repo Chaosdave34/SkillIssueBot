@@ -232,10 +232,11 @@ class Check(app_commands.Group):
 
     @app_commands.command(description="Check if an user passes the requirements.")
     async def reqs(self, interaction: discord.Interaction, user: discord.User):
+        user = interaction.guild.get_member(user.id)
         info = database_handler.check_user(user.id)
 
         if info is None:
-            response = "This user is not verified yet!"
+            embed = discord.Embed(title="This user is not verified yet!")
 
         else:
             uuid = info[1]
@@ -249,11 +250,55 @@ class Check(app_commands.Group):
             profile = profiles[average_levels[max(average_levels)]]
             secrets = profile["data"]["dungeons"]["secrets_found"]
             cata = profile["data"]["dungeons"]["catacombs"]["level"]["level"]
-            comps = profile["data"]["dungeons"]["catacombs"]["floors"]["7"]["stats"]["tier_completions"]
+            if "7" in profile["data"]["dungeons"]["catacombs"]["floors"]:
+                comps = profile["data"]["dungeons"]["catacombs"]["floors"]["7"]["stats"]["tier_completions"]
+            else:
+                comps = 0
+
+            weapons = profile["items"]["weapons"]
+            weapon_list = []
+            for weapon in weapons:
+                weapon_info = weapon["tag"]["ExtraAttributes"]
+                weapon_id = weapon_info["id"]
+
+                if weapon_id == "TERMINATOR":
+                    weapon_list.append("Terminator")
+
+                if weapon_id == "JUJU_SHORTBOW":
+                    overload = weapon_info["enchantments"]["overload"] if "overload" in weapon_info["enchantments"] else 0
+                    soul_eater = weapon_info["enchantments"]["ultimate_soul_eater"] if "ultimate_soul_eater" in weapon_info["enchantments"] else 0
+                    weapon_list.append(f"Juju Shortbow - SE {soul_eater} and OV {overload}")
+
+                if weapon_id == "AXE_OF_THE_SHREDDED ":
+                    weapon_list.append("Axe of the Shredded")
+
+                if weapon_id == "GIANTS_SWORD":
+                    weapon_list.append("Giant's Sword")
+
+                if weapon_id in ["HYPERION", "VALKYRIE", "ASTRAEA", "SCYLLA"]:
+                    weapon_list.append("Wither Blade")
 
             response = f"Secrets: {secrets}/5000\nCatacombs Level: {cata}/30\nF7 Completions: {comps}/40"
 
-        await interaction.response.send_message(content=response)
+            if user.nick:
+                title = f"{user.nick}'s ({user.name}) requirements:"
+            else:
+                title = f"{user.name}'s requirements:"
+
+            colour = discord.Colour.red()
+
+            test = any(items in ["Wither Blade", "Terminator"] for items in weapon_list) or all(
+                items in ["Axe of the Shredded", "Giant's Sword"] for items in weapon_list) or "Juju Shortbow - SE 5 and OV 5" in weapon_list
+
+            if secrets >= 5000 and cata >= 30 and comps >= 40 and test:
+                colour = discord.Colour.green()
+
+            embed = discord.Embed(title=title, colour=colour)
+            embed.add_field(name="General:", value=response)
+            value = "\n".join(weapon_list)
+
+            embed.add_field(name="Weapons:", value=value if value != "" else "---")
+        await interaction.response.send_message(embed=embed)
 
 
 client.tree.add_command(Check())
