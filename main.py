@@ -11,7 +11,7 @@ load_dotenv()
 
 DISCORD_TOKEN = environ["DISCORD_TOKEN"]
 HYPIXEL_KEY = environ["HYPIXEL_KEY"]
-GUILD = discord.Object(id=965681239174549554)
+GUILD = discord.Object(id=environ["GUILD_ID"])
 START = 1663859112
 
 database_handler = DatabaseHandler()
@@ -23,14 +23,14 @@ class MyClient(discord.Client):
         super().__init__(intents=intents)
 
         self.tree = app_commands.CommandTree(self)
-        self.tree.remove_command("verify")
 
     async def setup_hook(self):
         await self.tree.sync(guild=GUILD)
 
     async def on_ready(self):
+        print("Started!")
         print(f'Logged in as {client.user} (ID: {client.user.id})')
-        print('------')
+        print('----------')
 
     async def on_guild_available(self, guild: discord.Guild):
         if guild.id == GUILD.id:
@@ -242,41 +242,13 @@ class Check(app_commands.Group):
             uuid = info[1]
             profiles = minecraft.get_skyblock_profile(uuid)
             profiles = profiles["profiles"]
-
             average_levels = {}
             for profile in profiles:
                 average_levels[profiles[profile]["data"]["average_level"]] = profiles[profile]["profile_id"]
 
             profile = profiles[average_levels[max(average_levels)]]
-            secrets = profile["data"]["dungeons"]["secrets_found"]
-            cata = profile["data"]["dungeons"]["catacombs"]["level"]["level"]
-            if "7" in profile["data"]["dungeons"]["catacombs"]["floors"]:
-                comps = profile["data"]["dungeons"]["catacombs"]["floors"]["7"]["stats"]["tier_completions"]
-            else:
-                comps = 0
 
-            weapons = profile["items"]["weapons"]
-            weapon_list = []
-            for weapon in weapons:
-                weapon_info = weapon["tag"]["ExtraAttributes"]
-                weapon_id = weapon_info["id"]
-
-                if weapon_id == "TERMINATOR":
-                    weapon_list.append("Terminator")
-
-                if weapon_id == "JUJU_SHORTBOW":
-                    overload = weapon_info["enchantments"]["overload"] if "overload" in weapon_info["enchantments"] else 0
-                    soul_eater = weapon_info["enchantments"]["ultimate_soul_eater"] if "ultimate_soul_eater" in weapon_info["enchantments"] else 0
-                    weapon_list.append(f"Juju Shortbow - SE {soul_eater} and OV {overload}")
-
-                if weapon_id == "AXE_OF_THE_SHREDDED ":
-                    weapon_list.append("Axe of the Shredded")
-
-                if weapon_id == "GIANTS_SWORD":
-                    weapon_list.append("Giant's Sword")
-
-                if weapon_id in ["HYPERION", "VALKYRIE", "ASTRAEA", "SCYLLA"]:
-                    weapon_list.append("Wither Blade")
+            secrets, cata, comps, weapon_list = filter_profile_informartion(profile)
 
             response = f"Secrets: {secrets}/5000\nCatacombs Level: {cata}/30\nF7 Completions: {comps}/40"
 
@@ -299,6 +271,39 @@ class Check(app_commands.Group):
 
             embed.add_field(name="Weapons:", value=value if value != "" else "---")
         await interaction.response.send_message(embed=embed)
+
+
+def filter_profile_informartion(profile):
+    secrets = profile["data"]["dungeons"]["secrets_found"]
+    cata = profile["data"]["dungeons"]["catacombs"]["level"]["level"]
+    if "7" in profile["data"]["dungeons"]["catacombs"]["floors"]:
+        comps = profile["data"]["dungeons"]["catacombs"]["floors"]["7"]["stats"]["tier_completions"]
+    else:
+        comps = 0
+
+    weapons = profile["items"]["weapons"]
+    weapon_list = []
+    for weapon in weapons:
+        weapon_info = weapon["tag"]["ExtraAttributes"]
+        weapon_id = weapon_info["id"]
+
+        if weapon_id == "TERMINATOR":
+            weapon_list.append("Terminator")
+
+        if weapon_id == "JUJU_SHORTBOW":
+            overload = weapon_info["enchantments"]["overload"] if "overload" in weapon_info["enchantments"] else 0
+            soul_eater = weapon_info["enchantments"]["ultimate_soul_eater"] if "ultimate_soul_eater" in weapon_info["enchantments"] else 0
+            weapon_list.append(f"Juju Shortbow - SE {soul_eater} and OV {overload}")
+
+        if weapon_id == "AXE_OF_THE_SHREDDED ":
+            weapon_list.append("Axe of the Shredded")
+
+        if weapon_id == "GIANTS_SWORD":
+            weapon_list.append("Giant's Sword")
+
+        if weapon_id in ["HYPERION", "VALKYRIE", "ASTRAEA", "SCYLLA"]:
+            weapon_list.append("Wither Blade")
+    return secrets, cata, comps, weapon_list
 
 
 client.tree.add_command(Check())
