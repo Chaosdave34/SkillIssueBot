@@ -78,6 +78,8 @@ client = MyClient(intents=intents)
 @client.tree.command(description="Link your discord with your minecraft account.", guild=GUILD)
 @app_commands.describe(ign="Your minecraft IGN")
 async def verify(interaction: discord.Interaction, ign: str):
+    await interaction.response.defer()
+
     info = database_handler.check_user(interaction.user.id)
     user = interaction.user
 
@@ -116,7 +118,7 @@ async def verify(interaction: discord.Interaction, ign: str):
                         else:
                             response = "The given IGN is not linked to your discord account!"
 
-    await interaction.response.send_message(embed=discord.Embed(title=response), ephemeral=True)
+    await interaction.followup.send(embed=discord.Embed(title=response), ephemeral=True)
     embed = filter_profile_informartion(member=user)
     await interaction.guild.get_channel(1022135331094528070).send(embed=embed, content="Someone verified:")
 
