@@ -128,8 +128,9 @@ async def verify(interaction: discord.Interaction, ign: str):
 class Manage(app_commands.Group):
     @app_commands.command(description="Verify an user!")
     async def verify(self, interaction: discord.Interaction, user: discord.User, ign: str):
-        info = database_handler.check_user(user.id)
+        await interaction.response.defer()
 
+        info = database_handler.check_user(user.id)
         user = interaction.guild.get_member(user.id)
 
         if info is not None:
@@ -167,7 +168,7 @@ class Manage(app_commands.Group):
                             else:
                                 response = "The given IGN is not linked to the user's discord account!"
 
-        await interaction.response.send_message(embed=discord.Embed(title=response))
+        await interaction.followup.send(embed=discord.Embed(title=response))
         embed = filter_profile_informartion(member=user)
         await interaction.guild.get_channel(1022135331094528070).send(embed=embed, content="Someone verified:")
 
