@@ -115,12 +115,13 @@ async def verify(interaction: discord.Interaction, ign: str):
                             database_handler.add_user(user.id, uuid)
                             await user.add_roles(discord.Object(id=1029053058770010203))
 
+                            embed = filter_profile_informartion(member=user)
+                            await interaction.guild.get_channel(1022135331094528070).send(embed=embed, content="Someone verified:")
+
                         else:
                             response = "The given IGN is not linked to your discord account!"
 
     await interaction.followup.send(embed=discord.Embed(title=response), ephemeral=True)
-    embed = filter_profile_informartion(member=user)
-    await interaction.guild.get_channel(1022135331094528070).send(embed=embed, content="Someone verified:")
 
 
 @app_commands.guilds(GUILD.id)
@@ -164,13 +165,12 @@ class Manage(app_commands.Group):
                                 response = "Successfully verified!"
                                 database_handler.add_user(user.id, uuid)
                                 await user.add_roles(discord.Object(id=1029053058770010203))
-
+                                embed = filter_profile_informartion(member=user)
+                                await interaction.guild.get_channel(1022135331094528070).send(embed=embed, content="Someone verified:")
                             else:
                                 response = "The given IGN is not linked to the user's discord account!"
 
         await interaction.followup.send(embed=discord.Embed(title=response))
-        embed = filter_profile_informartion(member=user)
-        await interaction.guild.get_channel(1022135331094528070).send(embed=embed, content="Someone verified:")
 
     @app_commands.command(description="Unverify an user!")
     async def unverify(self, interaction: discord.Interaction, user: discord.User):
