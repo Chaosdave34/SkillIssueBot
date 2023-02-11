@@ -363,7 +363,7 @@ async def check_dungeon_death():
                             is_in_dungeon.remove(user)
                             await compare_stats(user)
 
-        await asyncio.sleep(20)
+        await asyncio.sleep(15)
 
 
 async def save_stats(user):
@@ -410,12 +410,12 @@ async def compare_stats(user):
                 death_list = {}
                 new_death_type_key = prev_deaths.keys() ^ deaths.keys()
                 for key in new_death_type_key:
-                    death_list[key] = int(deaths[key] - prev_deaths[key])
+                    death_list[key] = deaths[key]
 
                 for key in prev_deaths.keys():
                     if key != "deaths":
                         if deaths[key] > prev_deaths[key]:
-                            death_list[key] = int(deaths[key] - prev_deaths[key])
+                            death_list[key] = deaths[key] - prev_deaths[key]
 
                 # Get Catacombs floor
                 prev_catacombs = prev_dungeons["catacombs"]["times_played"]
@@ -430,10 +430,14 @@ async def compare_stats(user):
                     if catacombs[key] > prev_catacombs[key]:
                         floor = key
 
-                embed = discord.Embed(title=f"{user} died in Dungeons Floor {floor}.")
+                embed = discord.Embed(title=f"{user} died in Catacombs Floor {floor}.")
                 embed.set_footer(text="This feature is currently in alpha!")
                 for death_reason in death_list.keys():
-                    embed.add_field(name=death_reason, value=death_list[death_reason])
+                    name = death_reason.split("_")
+                    name.pop(0)
+                    name = [x.capitalize() for x in name]
+                    name = " ".join(name)
+                    embed.add_field(name=name, value=int(death_list[death_reason]))
 
                 await client.get_channel(995442764693114880).send(embed=embed)
 
