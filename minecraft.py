@@ -14,15 +14,32 @@ class HyixelHandler:
         self.key = key
         self.url = "https://api.hypixel.net"
 
+    def get_status(self, uuid):
+        response = requests.get(self.url + "/status", params={"key": self.key, "uuid": uuid})
+        response = read_json(response)
+
+        response = self.check_response(response)
+
+        return response["session"] if response is not None else None
+
+    def check_response(self, response):
+        if not response["success"]:
+            raise ApiException(response["cause"])
+        return response
+
     def get_player(self, uuid):
         response = requests.get(self.url + "/player", params={"key": self.key, "uuid": uuid})
         response = read_json(response)
+
+        response = self.check_response(response)
 
         return response["player"] if response is not None else None
 
     def get_profiles(self, uuid):
         response = requests.get(self.url + "/skyblock/profiles", params={"key": self.key, "uuid": uuid})
         response = read_json(response)
+
+        response = self.check_response(response)
 
         return response["profiles"] if response is not None else None
 
@@ -46,3 +63,9 @@ def get_skyblock_profile(playername):
     response = requests.get(f"https://sky.shiiyu.moe/api/v2/profile/{playername}")
     response = read_json(response)
     return response
+
+
+class ApiException(Exception):
+    def __init__(self, message="Api Error"):
+        self.message = message
+        super().__init__(self.message)

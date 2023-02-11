@@ -1,4 +1,6 @@
+import asyncio
 import datetime
+
 from dotenv import load_dotenv
 from os import environ
 import discord
@@ -31,6 +33,8 @@ class MyClient(discord.Client):
         print("Started!")
         print(f'Logged in as {client.user} (ID: {client.user.id})')
         print('----------')
+
+        client.loop.create_task(check_dungeon_death())
 
     async def on_guild_available(self, guild: discord.Guild):
         if guild.id == GUILD.id:
@@ -92,7 +96,11 @@ async def verify(interaction: discord.Interaction, ign: str):
             response = "This IGN does not exist!"
 
         else:
-            hypixel_info = hypixel_handler.get_player(uuid)
+            try:
+                hypixel_info = hypixel_handler.get_player(uuid)
+            except minecraft.ApiException as e:
+                await interaction.followup.send(embed=discord.Embed(title=e.message, color=discord.Colour.red()), ephemeral=True)
+
             if hypixel_info is None:
                 response = "You never played on hypixel!"
 
@@ -143,7 +151,11 @@ class Manage(app_commands.Group):
                 response = "This IGN does not exist!"
 
             else:
-                hypixel_info = hypixel_handler.get_player(uuid)
+                try:
+                    hypixel_info = hypixel_handler.get_player(uuid)
+                except minecraft.ApiException as e:
+                    await interaction.followup.send(embed=discord.Embed(title=e.message, color=discord.Colour.red()), ephemeral=True)
+
                 if hypixel_info is None:
                     response = "The user never played on hypixel!"
 
@@ -321,6 +333,109 @@ def filter_profile_informartion(member: discord.Member):
         embed.add_field(name="Weapons:", value=value if value != "" else "---")
 
     return embed
+
+
+is_in_dungeon = []
+prev_deaths_list = {}
+prev_dungeon_runs = {}
+
+
+async def check_dungeon_death():
+    while client.loop.is_running():
+        check_list = ["Chaosdave34", "_Tren1ty", "MagicHappened"]
+
+        for user in check_list:
+            try:
+                session = hypixel_handler.get_status(minecraft.username_to_uuid(user))
+            except minecraft.ApiException as e:
+                print(e.message)
+                break
+
+            if session is not None:
+                if session["online"]:
+                    if session["mode"] == "dungeon":
+                        if user not in is_in_dungeon:
+                            is_in_dungeon.append(user)
+                            await save_stats(user)
+
+                    else:
+                        if user in is_in_dungeon:
+                            is_in_dungeon.remove(user)
+                            await compare_stats(user)
+
+        await asyncio.sleep(20)
+
+
+async def save_stats(user):
+    try:
+        profiles = hypixel_handler.get_profiles(minecraft.username_to_uuid(user))
+    except minecraft.ApiException as e:
+        print(e.message)
+        return
+
+    if profiles is not None:
+        for profile in profiles:
+            if profile["selected"]:
+                user_profile_info = profile["members"][minecraft.username_to_uuid(user)]
+
+                deaths = {key: value for key, value in user_profile_info["stats"].items() if "death" in key}
+                prev_deaths_list[user] = deaths
+
+                dungeons = user_profile_info["dungeons"]["dungeon_types"]
+                prev_dungeon_runs[user] = dungeons
+
+
+async def compare_stats(user):
+    try:
+        profiles = hypixel_handler.get_profiles(minecraft.username_to_uuid(user))
+    except minecraft.ApiException as e:
+        print(e.message)
+        return
+
+    if profiles is not None:
+        for profile in profiles:
+            if profile["selected"]:
+                user_profile_info = profile["members"][minecraft.username_to_uuid(user)]
+
+                deaths = {key: value for key, value in user_profile_info["stats"].items() if "death" in key}
+                dungeons = user_profile_info["dungeons"]["dungeon_types"]
+
+                prev_deaths = prev_deaths_list[user]
+                prev_dungeons = prev_dungeon_runs[user]
+
+                # Check for deaths
+                if prev_deaths["deaths"] == deaths["deaths"]:
+                    return
+
+                death_list = {}
+                new_death_type_key = prev_deaths.keys() ^ deaths.keys()
+                for key in new_death_type_key:
+                    death_list[key] = int(deaths[key] - prev_deaths[key])
+
+                for key in prev_deaths.keys():
+                    if key != "deaths":
+                        if deaths[key] > prev_deaths[key]:
+                            death_list[key] = int(deaths[key] - prev_deaths[key])
+
+                # Get Catacombs floor
+                prev_catacombs = prev_dungeons["catacombs"]["times_played"]
+                catacombs = dungeons["catacombs"]["times_played"]
+
+                floor = 0
+                new_times_played_key = prev_catacombs.keys() ^ catacombs.keys()
+                for key in new_times_played_key:
+                    floor = key
+
+                for key in prev_catacombs.keys():
+                    if catacombs[key] > prev_catacombs[key]:
+                        floor = key
+
+                embed = discord.Embed(title=f"{user} died in Dungeons Floor {floor}.")
+                embed.set_footer(text="This feature is currently in alpha!")
+                for death_reason in death_list.keys():
+                    embed.add_field(name=death_reason, value=death_list[death_reason])
+
+                await client.get_channel(995442764693114880).send(embed=embed)
 
 
 client.tree.add_command(Check())
