@@ -344,7 +344,7 @@ prev_dungeon_runs = {}
 
 async def check_dungeon_death():
     while client.loop.is_running():
-        check_list = ["Chaosdave34", "_Tren1ty", "MagicHappened"]
+        check_list = ["Chaosdave34", "_Tren1ty", "MagicHappened", "AntrisLmao", "HelloThere135", "lfhl"]
 
         for user in check_list:
             try:
@@ -459,7 +459,7 @@ async def compare_stats(user):
                 else:
                     embed = discord.Embed(title=f"{user} died {death_count} times in {mode} Floor {floor}.", timestamp=datetime.datetime.now())
 
-                embed.set_footer(text="This feature is currently in alpha state!")
+                embed.set_footer(text="This feature is currently in beta and limited to a few users!")
 
                 if mode == "`unknown`":
                     embed.description = "You somehow managed to not kill a single mob!"
