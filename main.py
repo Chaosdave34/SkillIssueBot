@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import time
 
 from dotenv import load_dotenv
 from os import environ
@@ -435,14 +436,14 @@ async def compare_stats(user):
                 if death_count == 1:
                     embed = discord.Embed(title=f"{user} died 1 time in Catacombs Floor {floor}.")
                 else:
-                    embed = discord.Embed(title=f"{user} died {death_count} times in Catacombs Floor {floor}.")
+                    embed = discord.Embed(title=f"{user} died {death_count} times in Catacombs Floor {floor}.", timestamp=datetime.datetime.now())
                 embed.set_footer(text="This feature is currently in alpha!")
                 for death_reason in death_list.keys():
                     name = death_reason.split("_")
                     name.pop(0)
                     name = [x.capitalize() for x in name]
                     name = " ".join(name)
-                    embed.add_field(name=name, value=int(death_list[death_reason]))
+                    embed.add_field(name=f"{int(death_list[death_reason])}x {name}", value="\u200B", inline=True)
 
                 await client.get_channel(995442764693114880).send(embed=embed)
 
