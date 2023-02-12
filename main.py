@@ -407,6 +407,8 @@ async def compare_stats(user):
                 if prev_deaths["deaths"] == deaths["deaths"]:
                     return
 
+                death_count = deaths["deaths"] - prev_deaths["deaths"]
+
                 death_list = {}
                 new_death_type_key = prev_deaths.keys() ^ deaths.keys()
                 for key in new_death_type_key:
@@ -430,7 +432,10 @@ async def compare_stats(user):
                     if catacombs[key] > prev_catacombs[key]:
                         floor = key
 
-                embed = discord.Embed(title=f"{user} died in Catacombs Floor {floor}.")
+                if death_count == 1:
+                    embed = discord.Embed(title=f"{user} died 1 time in Catacombs Floor {floor}.")
+                else:
+                    embed = discord.Embed(title=f"{user} died {death_count} times in Catacombs Floor {floor}.")
                 embed.set_footer(text="This feature is currently in alpha!")
                 for death_reason in death_list.keys():
                     name = death_reason.split("_")
