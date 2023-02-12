@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import time
 
 from dotenv import load_dotenv
 from os import environ
@@ -420,11 +419,11 @@ async def compare_stats(user):
                         if deaths[key] > prev_deaths[key]:
                             death_list[key] = deaths[key] - prev_deaths[key]
 
-                # Get Catacombs floor
+                # Get Dungsons floor
                 prev_catacombs = prev_dungeons["catacombs"]["times_played"]
                 catacombs = dungeons["catacombs"]["times_played"]
 
-                floor = 0
+                floor = "0"
                 new_times_played_key = prev_catacombs.keys() ^ catacombs.keys()
                 for key in new_times_played_key:
                     floor = key
@@ -433,11 +432,34 @@ async def compare_stats(user):
                     if catacombs[key] > prev_catacombs[key]:
                         floor = key
 
+                # Check if catacombs or master catacombs
+                mode = "`unknown`"
+                if floor == "0":
+                    mode = "Catacombs"
+
+                prev_catacombs_killed = prev_dungeons["catacombs"]["mobs_killed"][floor]
+                catacombs_killed = dungeons["catacombs"]["mobs_killed"][floor]
+
+                prev_master_catacombs_killed = prev_dungeons["master_catacombs"]["mobs_killed"][floor]
+                master_catacombs_killed = dungeons["master_catacombs"]["mobs_killed"][floor]
+
+                if catacombs_killed > prev_catacombs_killed:
+                    mode = "Catacombs"
+                elif master_catacombs_killed > prev_master_catacombs_killed:
+                    mode = "Master Catacombs"
+
+                if floor == "0":
+                    floor = "Entrance"
+
                 if death_count == 1:
-                    embed = discord.Embed(title=f"{user} died 1 time in Catacombs Floor {floor}.")
+                    embed = discord.Embed(title=f"{user} died 1 time in {mode} Floor {floor}.")
                 else:
-                    embed = discord.Embed(title=f"{user} died {death_count} times in Catacombs Floor {floor}.", timestamp=datetime.datetime.now())
+                    embed = discord.Embed(title=f"{user} died {death_count} times in {mode} Floor {floor}.", timestamp=datetime.datetime.now())
                 embed.set_footer(text="This feature is currently in alpha!")
+
+                if mode == "`unknown`":
+                    embed.description = "You somehow managed to not kill a single mob!"
+
                 for death_reason in death_list.keys():
                     name = death_reason.split("_")
                     name.pop(0)
