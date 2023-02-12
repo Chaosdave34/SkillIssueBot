@@ -100,6 +100,7 @@ async def verify(interaction: discord.Interaction, ign: str):
                 hypixel_info = hypixel_handler.get_player(uuid)
             except minecraft.ApiException as e:
                 await interaction.followup.send(embed=discord.Embed(title=e.message, color=discord.Colour.red()), ephemeral=True)
+                return
 
             if hypixel_info is None:
                 response = "You never played on hypixel!"
@@ -155,6 +156,7 @@ class Manage(app_commands.Group):
                     hypixel_info = hypixel_handler.get_player(uuid)
                 except minecraft.ApiException as e:
                     await interaction.followup.send(embed=discord.Embed(title=e.message, color=discord.Colour.red()), ephemeral=True)
+                    return
 
                 if hypixel_info is None:
                     response = "The user never played on hypixel!"
@@ -386,8 +388,9 @@ async def save_stats(user):
 
 
 async def compare_stats(user):
+    uuid = minecraft.username_to_uuid(user)
     try:
-        profiles = hypixel_handler.get_profiles(minecraft.username_to_uuid(user))
+        profiles = hypixel_handler.get_profiles(uuid)
     except minecraft.ApiException as e:
         print(e.message)
         return
@@ -395,7 +398,7 @@ async def compare_stats(user):
     if profiles is not None:
         for profile in profiles:
             if profile["selected"]:
-                user_profile_info = profile["members"][minecraft.username_to_uuid(user)]
+                user_profile_info = profile["members"][uuid]
 
                 deaths = {key: value for key, value in user_profile_info["stats"].items() if "death" in key}
                 dungeons = user_profile_info["dungeons"]["dungeon_types"]
@@ -455,7 +458,8 @@ async def compare_stats(user):
                     embed = discord.Embed(title=f"{user} died 1 time in {mode} Floor {floor}.")
                 else:
                     embed = discord.Embed(title=f"{user} died {death_count} times in {mode} Floor {floor}.", timestamp=datetime.datetime.now())
-                embed.set_footer(text="This feature is currently in alpha!")
+
+                embed.set_footer(text="This feature is currently in alpha state!")
 
                 if mode == "`unknown`":
                     embed.description = "You somehow managed to not kill a single mob!"
