@@ -443,7 +443,7 @@ async def compare_stats(user):
                     name.pop(0)
                     name = [x.capitalize() for x in name]
                     name = " ".join(name)
-                    embed.add_field(name=f"{int(death_list[death_reason])}x {name}", value="\u200B", inline=True)
+                    embed.add_field(name=f"{int(death_list[death_reason])}x {name}", value=" ", inline=True)
 
                 await client.get_channel(995442764693114880).send(embed=embed)
 
