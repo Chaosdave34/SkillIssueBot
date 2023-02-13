@@ -367,6 +367,10 @@ async def check_dungeon_death():
                             await save_stats(user)
                         else:
                             await additionally_check_dungeon_death(user)
+                else:
+                    if user in is_in_dungeon:
+                        is_in_dungeon.remove(user)
+                        await compare_stats(user)
 
         await asyncio.sleep(20)
 
