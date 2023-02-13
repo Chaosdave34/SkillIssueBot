@@ -481,20 +481,18 @@ async def compare_stats(user):
                 mode = "`unknown`"
                 if floor == "0":
                     mode = "Catacombs"
-
-                prev_catacombs_killed = prev_dungeons["catacombs"]["mobs_killed"][floor]
-                catacombs_killed = dungeons["catacombs"]["mobs_killed"][floor]
-
-                prev_master_catacombs_killed = prev_dungeons["master_catacombs"]["mobs_killed"][floor]
-                master_catacombs_killed = dungeons["master_catacombs"]["mobs_killed"][floor]
-
-                if catacombs_killed > prev_catacombs_killed:
-                    mode = "Catacombs"
-                elif master_catacombs_killed > prev_master_catacombs_killed:
-                    mode = "Master Catacombs"
-
-                if floor == "0":
                     floor = "Entrance"
+                else:
+                    prev_catacombs_killed = prev_dungeons["catacombs"]["mobs_killed"][floor]
+                    catacombs_killed = dungeons["catacombs"]["mobs_killed"][floor]
+
+                    prev_master_catacombs_killed = prev_dungeons["master_catacombs"]["mobs_killed"][floor]
+                    master_catacombs_killed = dungeons["master_catacombs"]["mobs_killed"][floor]
+
+                    if catacombs_killed > prev_catacombs_killed:
+                        mode = "Catacombs"
+                    elif master_catacombs_killed > prev_master_catacombs_killed:
+                        mode = "Master Catacombs"
 
                 discord_member_id = database_handler.get_username_from_uuid(uuid)[0][0]
                 discord_member = client.get_guild(GUILD.id).get_member(int(discord_member_id))
