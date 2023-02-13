@@ -357,17 +357,16 @@ async def check_dungeon_death():
 
             if session is not None:
                 if session["online"]:
-                    if session["mode"] == "dungeon":
+                    if session["mode"] != "dungeon":
+                        if user in is_in_dungeon:
+                            is_in_dungeon.remove(user)
+                            await compare_stats(user)
+                    else:
                         if user not in is_in_dungeon:
                             is_in_dungeon.append(user)
                             await save_stats(user)
                         else:
                             await additionally_check_dungeon_death(user)
-
-                    else:
-                        if user in is_in_dungeon:
-                            is_in_dungeon.remove(user)
-                            await compare_stats(user)
 
         await asyncio.sleep(20)
 
@@ -497,10 +496,21 @@ async def compare_stats(user):
                 if floor == "0":
                     floor = "Entrance"
 
+                discord_member_id = database_handler.get_username_from_uuid(uuid)[0][0]
+                discord_member = client.get_guild(GUILD.id).get_member(int(discord_member_id))
+                discord_member_name = discord_member.nick if discord_member.nick is not None else discord_member.name
+
                 if death_count == 1:
-                    embed = discord.Embed(title=f"{user} died 1 time in {mode} Floor {floor}.")
+                    if discord_member_name != user:
+                        title = f"{user} ({discord_member_name}) died 1 time in {mode} Floor {floor}."
+                    else:
+                        title = f"{user} died 1 time in {mode} Floor {floor}."
                 else:
-                    embed = discord.Embed(title=f"{user} died {death_count} times in {mode} Floor {floor}.", timestamp=datetime.datetime.now())
+                    if discord_member_name != user:
+                        title = f"{user} ({discord_member_name}) died {death_count} times in {mode} Floor {floor}."
+                    else:
+                        title = f"{user} died {death_count} times in {mode} Floor {floor}."
+                embed = discord.Embed(title=title)
 
                 embed.set_footer(text="This feature is currently in beta and limited to a few users!")
 

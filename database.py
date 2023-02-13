@@ -16,20 +16,20 @@ class DatabaseHandler:
         self.connection.commit()
 
     # Inactivity Table
-    def check_user_inactivity(self, user_id):
-        sql = f"SELECT id FROM inactivity WHERE id = '{user_id}';"
+    def check_user_inactivity(self, member_id):
+        sql = f"SELECT id FROM inactivity WHERE id = '{member_id}';"
         self.cursor.execute(sql)
         if not self.cursor.fetchone():
-            sql = f"INSERT INTO inactivity VALUES('{user_id}', null, null);"
+            sql = f"INSERT INTO inactivity VALUES('{member_id}', null, null);"
             self.cursor.execute(sql)
             self.connection.commit()
 
-    def update_user_inactivity(self, user_id, last_message=None, last_voice=None):
+    def update_user_inactivity(self, member_id, last_message=None, last_voice=None):
         if last_message:
-            sql = f"UPDATE inactivity SET last_message = {last_message} WHERE id = '{user_id}';"
+            sql = f"UPDATE inactivity SET last_message = {last_message} WHERE id = '{member_id}';"
             self.cursor.execute(sql)
         if last_voice:
-            sql = f"UPDATE inactivity SET last_voice = {last_voice} WHERE id = '{user_id}';"
+            sql = f"UPDATE inactivity SET last_voice = {last_voice} WHERE id = '{member_id}';"
             self.cursor.execute(sql)
         self.connection.commit()
 
@@ -39,8 +39,8 @@ class DatabaseHandler:
         data = self.cursor.fetchall()
         return data
 
-    def get_user_inactivity(self, user_id):
-        sql = f"SELECT * FROM inactivity WHERE id = '{user_id}';"
+    def get_user_inactivity(self, member_id):
+        sql = f"SELECT * FROM inactivity WHERE id = '{member_id}';"
         self.cursor.execute(sql)
         data = self.cursor.fetchone()
         return data
@@ -57,12 +57,17 @@ class DatabaseHandler:
         self.connection.commit()
 
     def remove_user(self, member_id):
-        sql = f"DELETE FROM users WHERE id = {member_id};"
+        sql = f"DELETE FROM users WHERE id = '{member_id}';"
         self.cursor.execute(sql)
         self.connection.commit()
 
     def get_all_uuids(self):
-        sql = "SELECT uuid from users;"
+        sql = "SELECT uuid FROM users;"
+        self.cursor.execute(sql)
+        return self.cursor.fetchall()
+
+    def get_username_from_uuid(self, uuid):
+        sql = f"SELECT id FROM users WHERE uuid = '{uuid}'"
         self.cursor.execute(sql)
         return self.cursor.fetchall()
 
