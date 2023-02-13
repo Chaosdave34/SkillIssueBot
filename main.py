@@ -337,6 +337,8 @@ def filter_profile_informartion(member: discord.Member):
     return embed
 
 
+# Dungeon Death Checker
+
 is_in_dungeon = []
 prev_deaths_list = {}
 prev_dungeon_runs = {}
@@ -359,13 +361,54 @@ async def check_dungeon_death():
                         if user not in is_in_dungeon:
                             is_in_dungeon.append(user)
                             await save_stats(user)
+                        else:
+                            await additionally_check_dungeon_death(user)
 
                     else:
                         if user in is_in_dungeon:
                             is_in_dungeon.remove(user)
                             await compare_stats(user)
 
-        await asyncio.sleep(15)
+        await asyncio.sleep(20)
+
+
+async def additionally_check_dungeon_death(user):
+    uuid = minecraft.username_to_uuid(user)
+    try:
+        profiles = hypixel_handler.get_profiles(uuid)
+    except minecraft.ApiException as e:
+        print(e.message)
+        return
+
+    if profiles is not None:
+        for profile in profiles:
+            if profile["selected"]:
+                user_profile_info = profile["members"][uuid]
+
+                dungeons = user_profile_info["dungeons"]["dungeon_types"]
+                prev_dungeons = prev_dungeon_runs[user]
+
+                prev_catacombs = prev_dungeons["catacombs"]["times_played"]
+                catacombs = dungeons["catacombs"]["times_played"]
+
+                new_run = False
+                new_times_played_key = prev_catacombs.keys() ^ catacombs.keys()
+                if len(new_times_played_key) != 0:
+                    new_run = True
+
+                for key in prev_catacombs.keys():
+                    if catacombs[key] > prev_catacombs[key]:
+                        new_run = True
+
+                if new_run:
+                    deaths = {key: value for key, value in user_profile_info["stats"].items() if "death" in key}
+
+                    # Compare values
+                    await compare_stats(user)
+
+                    # Save values
+                    prev_deaths_list[user] = deaths
+                    prev_dungeon_runs[user] = dungeons
 
 
 async def save_stats(user):
