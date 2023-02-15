@@ -509,9 +509,9 @@ async def compare_stats(user):
                         title = f"{user} died 1 time in {mode} Floor {floor}."
                 else:
                     if discord_member_name != user:
-                        title = f"{user} ({discord_member_name}) died {death_count} times in {mode} Floor {floor}."
+                        title = f"{user} ({discord_member_name}) died {round(death_count)} times in {mode} Floor {floor}."
                     else:
-                        title = f"{user} died {death_count} times in {mode} Floor {floor}."
+                        title = f"{user} died {round(death_count)} times in {mode} Floor {floor}."
                 embed = discord.Embed(title=title)
 
                 embed.set_footer(text="This feature is currently in beta and limited to a few users!")
