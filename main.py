@@ -346,31 +346,34 @@ prev_dungeon_runs = {}
 
 async def check_dungeon_death():
     while client.loop.is_running():
-        check_list = ["Chaosdave34", "_Tren1ty", "MagicHappened", "AntrisLmao", "HelloThere135", "lfhl"]
+        check_list = ["Chaosdave34", "MagicHappened", "AntrisLmao", "HelloThere135", "lfhl"]
+
 
         for user in check_list:
-            try:
-                session = hypixel_handler.get_status(minecraft.username_to_uuid(user))
-            except minecraft.ApiException as e:
-                print(e.message)
-                break
+            uuid = minecraft.username_to_uuid(user)
+            if uuid is not None:
+                try:
+                    session = hypixel_handler.get_status(uuid)
+                except minecraft.ApiException as e:
+                    print(e.message)
+                    break
 
-            if session is not None:
-                if session["online"]:
-                    if session["mode"] != "dungeon":
+                if session is not None:
+                    if session["online"]:
+                        if session["mode"] != "dungeon":
+                            if user in is_in_dungeon:
+                                is_in_dungeon.remove(user)
+                                await compare_stats(user)
+                        else:
+                            if user not in is_in_dungeon:
+                                is_in_dungeon.append(user)
+                                await save_stats(user)
+                            else:
+                                await additionally_check_dungeon_death(user)
+                    else:
                         if user in is_in_dungeon:
                             is_in_dungeon.remove(user)
                             await compare_stats(user)
-                    else:
-                        if user not in is_in_dungeon:
-                            is_in_dungeon.append(user)
-                            await save_stats(user)
-                        else:
-                            await additionally_check_dungeon_death(user)
-                else:
-                    if user in is_in_dungeon:
-                        is_in_dungeon.remove(user)
-                        await compare_stats(user)
 
         await asyncio.sleep(20)
 
