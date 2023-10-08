@@ -82,8 +82,6 @@ client = MyClient(intents=intents)
 @client.tree.command(description="Link your discord with your minecraft account.", guild=GUILD)
 @app_commands.describe(ign="Your minecraft IGN")
 async def verify(interaction: discord.Interaction, ign: str):
-    await interaction.response.defer()
-
     info = database_handler.check_user(interaction.user.id)
     user = interaction.user
 
@@ -116,10 +114,9 @@ async def verify(interaction: discord.Interaction, ign: str):
 
                     else:
                         discord_tag = social["DISCORD"]
-                        discord_name = discord_tag.split("#")[0]
-                        discord_discriminator = discord_tag.split("#")[1]
+                        discord_name = discord_tag
 
-                        if discord_name == user.name and discord_discriminator == user.discriminator:
+                        if discord_name == user.name:
                             response = "Successfully verified!"
                             database_handler.add_user(user.id, uuid)
                             await user.add_roles(discord.Object(id=1029053058770010203))
@@ -130,7 +127,7 @@ async def verify(interaction: discord.Interaction, ign: str):
                         else:
                             response = "The given IGN is not linked to your discord account!"
 
-    await interaction.followup.send(embed=discord.Embed(title=response), ephemeral=True)
+    await interaction.response.send_message(embed=discord.Embed(title=response), ephemeral=True)
 
 
 @app_commands.guilds(GUILD.id)
@@ -138,8 +135,6 @@ async def verify(interaction: discord.Interaction, ign: str):
 class Manage(app_commands.Group):
     @app_commands.command(description="Verify an user!")
     async def verify(self, interaction: discord.Interaction, user: discord.User, ign: str):
-        await interaction.response.defer()
-
         info = database_handler.check_user(user.id)
         user = interaction.guild.get_member(user.id)
 
@@ -172,8 +167,8 @@ class Manage(app_commands.Group):
 
                         else:
                             discord_tag = social["DISCORD"]
-                            discord_name = discord_tag.split("#")[0]
-                            discord_discriminator = discord_tag.split("#")[1]
+                            discord_name = discord_tag
+                            discord_discriminator = discord_tag
 
                             if discord_name == user.name and discord_discriminator == user.discriminator:
                                 response = "Successfully verified!"
@@ -184,7 +179,7 @@ class Manage(app_commands.Group):
                             else:
                                 response = "The given IGN is not linked to the user's discord account!"
 
-        await interaction.followup.send(embed=discord.Embed(title=response))
+        await interaction.response.send_message(embed=discord.Embed(title=response))
 
     @app_commands.command(description="Unverify an user!")
     async def unverify(self, interaction: discord.Interaction, user: discord.User):

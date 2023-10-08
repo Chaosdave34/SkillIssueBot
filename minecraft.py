@@ -49,7 +49,7 @@ def username_to_uuid(username):
     response = requests.get(f"https://api.mojang.com/users/profiles/minecraft/{username}")
     response = read_json(response)
 
-    return response["id"] if response is not None else None
+    return response["id"] if response is not None and "id" in response else None
 
 
 def uuid_to_profile(uuid):
