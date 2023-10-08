@@ -15,7 +15,7 @@ class HyixelHandler:
         self.url = "https://api.hypixel.net"
 
     def get_status(self, uuid):
-        response = requests.get(self.url + "/status", params={"key": self.key, "uuid": uuid})
+        response = requests.get(self.url + "/status", params={"uuid": uuid}, headers={"API-Key": self.key})
         response = read_json(response)
 
         response = self.check_response(response)
@@ -28,7 +28,7 @@ class HyixelHandler:
         return response
 
     def get_player(self, uuid):
-        response = requests.get(self.url + "/player", params={"key": self.key, "uuid": uuid})
+        response = requests.get(self.url + "/player", params={"uuid": uuid}, headers={"API-Key": self.key})
         response = read_json(response)
 
         response = self.check_response(response)
@@ -36,7 +36,7 @@ class HyixelHandler:
         return response["player"] if response is not None else None
 
     def get_profiles(self, uuid):
-        response = requests.get(self.url + "/skyblock/profiles", params={"key": self.key, "uuid": uuid})
+        response = requests.get(self.url + "/skyblock/profiles", params={"uuid": uuid}, headers={"API-Key": self.key})
         response = read_json(response)
 
         response = self.check_response(response)
